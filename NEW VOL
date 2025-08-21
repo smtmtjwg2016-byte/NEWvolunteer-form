@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>सुप्रीम फाउंडेशन, जसवंतगढ़ - Google Sheets इंटीग्रेशन</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4e54c8;
+            --secondary: #8f94fb;
+            --accent1: #ff7e5f;
+            --accent2: #feb47b;
+            --light: #f8f9fa;
+            --dark: #343a40;
+        }
+        
+        body {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: #333;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px 0;
+        }
+        
+        .container-main {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .form-container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(to right, var(--accent1), var(--accent2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--secondary);
+        }
+        
+        h1 {
+            font-weight: 700;
+            font-size: 2.5rem;
+        }
+        
+        .section-title {
+            color: var(--primary);
+            border-left: 4px solid var(--accent1);
+            padding-left: 10px;
+            margin: 25px 0 15px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 5px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            border: none;
+            padding: 10px 20px;
+            font-weight: 600;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(to right, var(--secondary), var(--primary));
+        }
+        
+        .btn-add {
+            background: linear-gradient(to right, var(--accent1), var(--accent2));
+            border: none;
+            font-weight: 600;
+        }
+        
+        .btn-add:hover {
+            background: linear-gradient(to right, var(--accent2), var(--accent1));
+        }
+        
+        .volunteer-item {
+            background-color: var(--light);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--primary);
+            transition: all 0.3s ease;
+        }
+        
+        .volunteer-item:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .calculated-field {
+            background-color: #e9ecef;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .subject-field {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #ccc;
+        }
+        
+        .remove-btn {
+            margin-top: 10px;
+        }
+        
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+        
+        #loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 9999;
+            text-align: center;
+            padding-top: 20%;
+        }
+        
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        
+        @media (max-width: 768px) {
+            .form-container {
+                padding: 15px;
+                margin: 15px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">लोड हो रहा है...</span>
+        </div>
+        <p class="mt-3">डेटा सबमिट किया जा रहा है, कृपया प्रतीक्षा करें...</p>
+    </div>
+
+    <div class="container container-main py-4">
+        <div class="header">
+            <h1>सुप्रीम फाउंडेशन, जसवंतगढ़</h1>
+            <p>स्वयंसेवक जानकारी फॉर्म - Google Sheets इंटीग्रेशन</p>
+        </div>
+        
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            यह फॉर्म सीधे Google Sheets में डेटा सेव करेगा। फॉर्म भरने पर सभी जानकारी आपकी Google Sheet में ऑटोमेटिक सेव हो जाएगी।
+        </div>
+        
+        <div class="form-container">
+            <form id="volunteerForm">
+                <!-- विद्यालय का नाम -->
+                <div class="mb-4">
+                    <label for="schoolName" class="form-label">विद्यालय का नाम *</label>
+                    <select class="form-select" id="schoolName" required>
+                        <option value="" selected disabled>अपने विद्यालय का नाम चुनें</option>
+                        <option value="जसवंतगढ़ सीनियर सेकेंडरी स्कूल">जसवंतगढ़ सीनियर सेकेंडरी स्कूल</option>
+                        <option value="सुप्रीम पब्लिक स्कूल">सुप्रीम पब्लिक स्कूल</option>
+                        <option value="मॉडर्न विद्या मंदिर">मॉडर्न विद्या मंदिर</option>
+                        <option value="गांधी उच्च माध्यमिक विद्यालय">गांधी उच्च माध्यमिक विद्यालय</option>
+                        <option value="कस्तूरबा बालिका विद्यालय">कस्तूरबा बालिका विद्यालय</option>
+                    </select>
+                </div>
+                
+                <!-- कार्यरत स्वयंसेवक -->
+                <div class="mb-4">
+                    <label for="totalVolunteers" class="form-label">कुल कार्यरत स्वयंसेवक *</label>
+                    <input type="number" class="form-control" id="totalVolunteers" min="0" required onchange="updateVolunteerSections()">
+                </div>
+                
+                <!-- स्वीकृत पद -->
+                <h3 class="section-title">स्वीकृत पद</h3>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="approvedGrade1" class="form-label">ग्रेड प्रथम</label>
+                        <input type="number" class="form-control approved-posts" id="approvedGrade1" min="0" value="0" onchange="calculateVacancies()">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="approvedGrade2" class="form-label">ग्रेड द्वितीय</label>
+                        <input type="number" class="form-control approved-posts" id="approvedGrade2" min="0" value="0" onchange="calculateVacancies()">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="approvedGrade3" class="form-label">ग्रेड तृतीय</label>
+                        <input type="number" class="form-control approved-posts" id="approvedGrade3" min="0" value="0" onchange="calculateVacancies()">
+                    </div>
+                </div>
+                
+                <!-- कार्यरत पद -->
+                <h3 class="section-title">कार्यरत पद</h3>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="workingGrade1" class="form-label">ग्रेड प्रथम</label>
+                        <input type="number" class="form-control working-posts" id="workingGrade1" min="0" value="0" onchange="calculateVacancies()">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="workingGrade2" class="form-label">ग्रेड द्वितीय</label>
+                        <input type="number" class="form-control working-posts" id="workingGrade2" min="0" value="0" onchange="calculateVacancies()">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="workingGrade3" class="form-label">ग्रेड तृतीय</label>
+                        <input type="number" class="form-control working-posts" id="workingGrade3" min="0" value="0" onchange="calculateVacancies()">
+                    </div>
+                </div>
+                
+                <!-- रिक्त पद (ऑटो-कैलकुलेटेड) -->
+                <h3 class="section-title">रिक्त पद</h3>
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <label for="vacantGrade1" class="form-label">ग्रेड प्रथम</label>
+                        <input type="number" class="form-control calculated-field" id="vacantGrade1" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="vacantGrade2" class="form-label">ग्रेड द्वितीय</label>
+                        <input type="number" class="form-control calculated-field" id="vacantGrade2" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="vacantGrade3" class="form-label">ग्रेड तृतीय</label>
+                        <input type="number" class="form-control calculated-field" id="vacantGrade3" readonly>
+                    </div>
+                </div>
+                
+                <!-- रिक्त पदों के लिए विषय विवरण -->
+                <div id="subjectFieldsContainer" class="mb-4"></div>
+                
+                <!-- कार्यरत स्वयंसेवकों का विवरण -->
+                <h3 class="section-title">कार्यरत स्वयंसेवकों का विवरण</h3>
+                <div id="volunteerDetailsContainer">
+                    <!-- यहाँ जावास्क्रिप्ट द्वारा फ़ील्ड जोड़े जाएँगे -->
+                </div>
+                
+                <button type="button" class="btn btn-add mb-4" onclick="addVolunteerField()">
+                    <i class="fas fa-plus me-2"></i>नया स्वयंसेवक जोड़ें
+                </button>
+                
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-paper-plane me-2"></i>जानकारी Google Sheet में सबमिट करें
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="alert alert-warning">
+            <h4><i class="fas fa-exclamation-triangle me-2"></i>सेटअप निर्देश:</h4>
+            <ol>
+                <li>Google Apps Script बनाएं और ऊपर दिया गया कोड डालें</li>
+                <li>Script को Web App के रूप में Deploy करें</li>
+                <li>नीचे दिए गए scriptURL में अपना Web App URL डालें</li>
+            </ol>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // अपना Google Apps Script URL यहाँ डालें
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbwXu84RLXg3WgXbOyYu1XYX0gCgP923jX5tnYefz_S_iZQd7OsKZFSI6-hBBaTM7nBk/exec';
+        
+        // रिक्त पदों की गणना
+        function calculateVacancies() {
+            const vacantGrade1 = Math.max(0, parseInt(document.getElementById('approvedGrade1').value || 0) - parseInt(document.getElementById('workingGrade1').value || 0));
+            const vacantGrade2 = Math.max(0, parseInt(document.getElementById('approvedGrade2').value || 0) - parseInt(document.getElementById('workingGrade2').value || 0));
+            const vacantGrade3 = Math.max(0, parseInt(document.getElementById('approvedGrade3').value || 0) - parseInt(document.getElementById('workingGrade3').value || 0));
+            
+            document.getElementById('vacantGrade1').value = vacantGrade1;
+            document.getElementById('vacantGrade2').value = vacantGrade2;
+            document.getElementById('vacantGrade3').value = vacantGrade3;
+            
+            // रिक्त पदों के लिए विषय फ़ील्ड बनाएं
+            updateSubjectFields();
+            
+            // कार्यरत स्वयंसेवक अनुभागों को अपडेट करें
+            updateVolunteerSections();
+        }
+        
+        // रिक्त पदों के लिए विषय फ़ील्ड बनाना
+        function updateSubjectFields() {
+            const container = document.getElementById('subjectFieldsContainer');
+            container.innerHTML = '';
+            
+            const vacantGrade1 = parseInt(document.getElementById('vacantGrade1').value || 0);
+            const vacantGrade2 = parseInt(document.getElementById('vacantGrade2').value || 0);
+            const vacantGrade3 = parseInt(document.getElementById('vacantGrade3').value || 0);
+            
+            if (vacantGrade1 > 0 || vacantGrade2 > 0 || vacantGrade3 > 0) {
+                const title = document.createElement('h3');
+                title.className = 'section-title';
+                title.textContent = 'रिक्त पदों के लिए आवश्यक विषय';
+                container.appendChild(title);
+                
+                if (vacantGrade1 > 0) {
+                    createSubjectFields(container, 'ग्रेड प्रथम', vacantGrade1);
+                }
+                
+                if (vacantGrade2 > 0) {
+                    createSubjectFields(container, 'ग्रेड द्वितीय', vacantGrade2);
+                }
+                
+                if (vacantGrade3 > 0) {
+                    createSubjectFields(container, 'ग्रेड तृतीय', vacantGrade3);
+                }
+            }
+        }
+        
+        // विषय फ़ील्ड बनाने की सहायक फ़ंक्शन
+        function createSubjectFields(container, gradeName, count) {
+            const gradeDiv = document.createElement('div');
+            gradeDiv.className = 'mb-3';
+            
+            const gradeTitle = document.createElement('h5');
+            gradeTitle.style.color = 'var(--primary)';
+            gradeTitle.textContent = `${gradeName} (${count} रिक्त पद)`;
+            gradeDiv.appendChild(gradeTitle);
+            
+            for (let i = 1; i <= count; i++) {
+                const subjectDiv = document.createElement('div');
+                subjectDiv.className = 'subject-field';
+                
+                const label = document.createElement('label');
+                label.className = 'form-label';
+                label.textContent = `विषय ${i}`;
+                
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'form-control mb-2';
+                
+                subjectDiv.appendChild(label);
+                subjectDiv.appendChild(input);
+                gradeDiv.appendChild(subjectDiv);
+            }
+            
+            container.appendChild(gradeDiv);
+        }
+        
+        // कार्यरत स्वयंसेवक अनुभागों को अपडेट करना
+        function updateVolunteerSections() {
+            const totalVolunteers = parseInt(document.getElementById('totalVolunteers').value || 0);
+            const container = document.getElementById('volunteerDetailsContainer');
+            
+            // मौजूदा फ़ील्ड्स को साफ करें
+            container.innerHTML = '';
+            
+            // कुल कार्यरत स्वयंसेवकों की संख्या के अनुसार फ़ील्ड जोड़ें
+            for (let i = 0; i < totalVolunteers; i++) {
+                addVolunteerField();
+            }
+        }
+        
+        // नया स्वयंसेवक फ़ील्ड जोड़ना
+        function addVolunteerField() {
+            const container = document.getElementById('volunteerDetailsContainer');
+            const newField = document.createElement('div');
+            newField.className = 'volunteer-item mt-3';
+            newField.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">स्वयंसेवक का ग्रेड</label>
+                        <select class="form-select volunteer-grade" required>
+                            <option value="" selected disabled>ग्रेड चुनें</option>
+                            <option value="Grade I">ग्रेड प्रथम</option>
+                            <option value="Grade II">ग्रेड द्वितीय</option>
+                            <option value="Grade III">ग्रेड तृतीय</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">विषय</label>
+                        <input type="text" class="form-control volunteer-subject" required>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-danger remove-btn" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times me-1"></i>हटाएं
+                </button>
+            `;
+            container.appendChild(newField);
+        }
+        
+        // फॉर्म सबमिशन
+        document.getElementById('volunteerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // लोडिंग दिखाएं
+            document.getElementById('loading').style.display = 'block';
+            
+            // फॉर्म डेटा एकत्रित करें
+            const formDataObj = {
+                schoolName: document.getElementById('schoolName').value,
+                totalVolunteers: document.getElementById('totalVolunteers').value,
+                approvedPosts: {
+                    grade1: document.getElementById('approvedGrade1').value,
+                    grade2: document.getElementById('approvedGrade2').value,
+                    grade3: document.getElementById('approvedGrade3').value
+                },
+                workingPosts: {
+                    grade1: document.getElementById('workingGrade1').value,
+                    grade2: document.getElementById('workingGrade2').value,
+                    grade3: document.getElementById('workingGrade3').value
+                },
+                vacantPosts: {
+                    grade1: document.getElementById('vacantGrade1').value,
+                    grade2: document.getElementById('vacantGrade2').value,
+                    grade3: document.getElementById('vacantGrade3').value
+                },
+                volunteers: []
+            };
+            
+            // स्वयंसेवकों का डेटा एकत्रित करें
+            const volunteerItems = document.querySelectorAll('.volunteer-item');
+            volunteerItems.forEach(item => {
+                const grade = item.querySelector('.volunteer-grade').value;
+                const subject = item.querySelector('.volunteer-subject').value;
+                if (grade && subject) {
+                    formDataObj.volunteers.push({ grade, subject });
+                }
+            });
+            
+            try {
+                // Google Apps Script को डेटा भेजें
+                const response = await fetch(scriptURL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8',
+                    },
+                    body: JSON.stringify(formDataObj)
+                });
+                
+                const result = await response.json();
+                
+                if (result.result === 'success') {
+                    alert('डेटा सफलतापूर्वक Google Sheet में सबमिट किया गया!');
+                    document.getElementById('volunteerForm').reset();
+                    calculateVacancies();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch(error) {
+                console.error('Error:', error);
+                alert('त्रुटि: डेटा सबमिट नहीं किया जा सका। कृपया बाद में पुनः प्रयास करें।');
+            } finally {
+                // लोडिंग छुपाएं
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
+        
+        // पेज लोड होने पर रिक्त पदों की गणना करें
+        document.addEventListener('DOMContentLoaded', function() {
+            calculateVacancies();
+        });
+    </script>
+</body>
+</html>
